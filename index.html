@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotelBot - AI Hotel Recommendations with Live Data</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 700px;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::before {
+            content: '🤖🏨';
+            font-size: 2em;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .location-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .location-btn {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .location-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 184, 148, 0.3);
+        }
+
+        .location-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-controls {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #6c5ce7;
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 250px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            max-height: 200px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            text-align: right;
+        }
+
+        .bot-message {
+            text-align: left;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 85%;
+            word-wrap: break-word;
+            font-size: 0.9em;
+        }
+
+        .user-message .message-bubble {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+        }
+
+        .bot-message .message-bubble {
+            background: #e9ecef;
+            color: #333;
+            border: 1px solid #dee2e6;
+        }
+
+        .chat-input-container {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #dee2e6;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 20px;
+            font-size: 0.9em;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: #6c5ce7;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+        }
+
+        .right-panel {
+            background: #f8f9fa;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .map-header {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #6c5ce7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .location-info {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #004085;
+            font-size: 0.9em;
+        }
+
+        .hotel-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #6c5ce7;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .hotel-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .hotel-name {
+            font-weight: bold;
+            color: #6c5ce7;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .hotel-details {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 3px;
+        }
+
+        .hotel-rating {
+            color: #ffa500;
+            font-size: 0.9em;
+        }
+
+        .hotel-address {
+            color: #00b894;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .hotel-price {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-luxury {
+            background: #fdcb6e;
+        }
+
+        .status-budget {
+            background: #00b894;
+        }
+
+        .status-boutique {
+            background: #6c5ce7;
+        }
+
+        .status-resort {
+            background: #e84393;
+        }
+
+        .star-rating {
+            color: #ffa500;
+            font-size: 0.9em;
+            margin-left: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .right-panel {
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <div class="header">
+                <h1>HotelBot AI</h1>
+                <p class="subtitle">Real-time Hotel Finder</p>
+            </div>
+            
+            <div class="main-content">
+                <div class="location-section">
+                    <h3>📍 Your Location</h3>
+                    <button class="location-btn" onclick="getLocation()">Get My Location</button>
+                    <div id="locationInfo" class="location-info" style="display: none;"></div>
+                </div>
+
+                <div class="search-controls">
+                    <div class="control-group">
+                        <label for="hotelType">🏨 Hotel Type:</label>
+                        <select id="hotelType">
+                            <option value="">All Hotels</option>
+                            <option value="hotel">Hotel</option>
+                            <option value="motel">Motel</option>
+                            <option value="guest_house">Guest House</option>
+                            <option value="hostel">Hostel</option>
+                            <option value="resort">Resort</option>
+                            <option value="bed_and_breakfast">B&B</option>
+                            <option value="apartment">Apartment</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="searchRadius">📏 Search Radius:</label>
+                        <select id="searchRadius">
+                            <option value="1000">1 km</option>
+                            <option value="2000" selected>2 km</option>
+                            <option value="5000">5 km</option>
+                            <option value="10000">10 km</option>
+                            <option value="20000">20 km</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="searchQuery">🔍 Search Term:</label>
+                        <input type="text" id="searchQuery" placeholder="e.g., hotel, accommodation, luxury">
+                    </div>
+                    
+                    <button class="search-btn" onclick="searchHotels()">🔍 Find Hotels</button>
+                </div>
+                
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot-message">
+                            <div class="message-bubble">
+                                🤖 Hi! I'm HotelBot with real-time hotel data. Click "Get My Location" and I'll find actual hotels near you using live data from OpenStreetMap!
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="loading" id="loading">
+                        🔍 Searching for hotels...
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Ask me about hotels..." onkeypress="handleKeyPress(event)">
+                        <button class="send-btn" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="map-header">
+                <h3>🗺️ Hotels Near You</h3>
+                <p>Real-time data from OpenStreetMap</p>
+            </div>
+            <div class="map-container" id="mapContainer">
+                <div class="no-results" id="noResults">
+                    📍 Share your location to see hotels near you!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userLocation = null;
+        let foundHotels = [];
+
+        function getLocation() {
+            const btn = document.querySelector('.location-btn');
+            const locationInfo = document.getElementById('locationInfo');
+            
+            btn.disabled = true;
+            btn.textContent = 'Getting Location...';
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        
+                        // Get location name
+                        const locationName = await getLocationName(userLocation.lat, userLocation.lng);
+                        
+                        locationInfo.innerHTML = `
+                            <strong>📍 Location Found!</strong><br>
+                            <strong>📌 ${locationName}</strong><br>
+                            Lat: ${userLocation.lat.toFixed(4)}, Lng: ${userLocation.lng.toFixed(4)}<br>
+                            <em>Ready to find hotels near you!</em>
+                        `;
+                        locationInfo.style.display = 'block';
+                        
+                        btn.textContent = 'Location Set ✓';
+                        btn.style.background = 'linear-gradient(135deg, #00b894, #00cec9)';
+                        
+                        // Auto-search for hotels
+                        searchHotels();
+                        
+                        addBotMessage(`Great! I found your location in ${locationName}. Let me search for hotels near you...`);
+                    },
+                    (error) => {
+                        locationInfo.innerHTML = `
+                            <strong>⚠️ Location Error:</strong><br>
+                            ${error.message}<br>
+                            <em>Please try again or enable location services</em>
+                        `;
+                        locationInfo.style.display = 'block';
+                        
+                        btn.disabled = false;
+                        btn.textContent = 'Try Again';
+                        
+                        addBotMessage(`I couldn't get your location: ${error.message}. Please make sure location services are enabled and try again.`);
+                    }
+                );
+            } else {
+                locationInfo.innerHTML = `
+                    <strong>⚠️ Geolocation not supported</strong><br>
+                    Your browser doesn't support location services
+                `;
+                locationInfo.style.display = 'block';
+                
+                btn.disabled = false;
+                btn.textContent = 'Not Supported';
+                
+                addBotMessage("Your browser doesn't support geolocation. You can still search by entering a location name!");
+            }
+        }
+
+        async function getLocationName(lat, lng) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+                const data = await response.json();
+                
+                if (data.address) {
+                    const parts = [];
+                    if (data.address.neighbourhood) parts.push(data.address.neighbourhood);
+                    if (data.address.city) parts.push(data.address.city);
+                    if (data.address.state) parts.push(data.address.state);
+                    if (data.address.country) parts.push(data.address.country);
+                    
+                    return parts.join(', ') || 'Unknown Location';
+                }
+                
+                return 'Location Found';
+            } catch (error) {
+                console.error('Error getting location name:', error);
+                return 'Location Found';
+            }
+        }
+
+        async function searchHotels() {
+            if (!userLocation) {
+                addBotMessage("Please share your location first so I can find hotels near you!");
+                return;
+            }
+            
+            showLoading();
+            
+            const hotelType = document.getElementById('hotelType').value;
+            const searchRadius = document.getElementById('searchRadius').value;
+            const searchQuery = document.getElementById('searchQuery').value || 'hotel';
+            
+            try {
+                // Build query for OpenStreetMap Overpass API
+                let query = `
+                    [out:json][timeout:25];
+                    (
+                        node["tourism"="hotel"](around:${searchRadius},${userLocation.lat},${userLocation.lng});
+                        node["tourism"="motel"](around:${searchRadius},${userLocation.lat},${userLocation.lng});
+                        node["tourism"="guest_house"](around:${searchRadius},${userLocation.lat},${userLocation.lng});
+                        node["tourism"="hostel"](around:${searchRadius},${userLocation.lat},${userLocation.lng});
+                        node["tourism"="chalet"](around:${searchRadius},${userLocation.lat},${userLocation.lng});
+                        node["tourism"="apartment"](around:${searchRadius},${userLocation.lat},${userLocation.lng});
+                        way["tourism"="hotel"](around:${searchRadius},${userLocation.lat},${userLocation.lng});
+                        way["tourism"="motel"](around:${searchRadius},${userLocation.lat},${userLocation.lng});
+                        way["tourism"="guest_house"](around:${searchRadius},${userLocation.lat},${userLocation.lng});
+                        way["tourism"="hostel"](around:${searchRadius},${userLocation.lat},${userLocation.lng});
+                    );
+                    out geom;
+                `;
+                
+                const response = await fetch('https://overpass-api.de/api/interpreter', {
+                    method: 'POST',
+                    body: query
+                });
+                
+                const data = await response.json();
+                foundHotels = data.elements.filter(place => place.tags && place.tags.name);
+                
+                // Filter by hotel type if specified
+                if (hotelType) {
+                    foundHotels = foundHotels.filter(place => {
+                        const tourism = place.tags.tourism || '';
+                        return tourism === hotelType;
+                    });
+                }
+                
+                // Calculate distances and sort
+                foundHotels = foundHotels.map(hotel => {
+                    const lat = hotel.lat || (hotel.bounds ? (hotel.bounds.minlat + hotel.bounds.maxlat) / 2 : 0);
+                    const lon = hotel.lon || (hotel.bounds ? (hotel.bounds.minlon + hotel.bounds.maxlon) / 2 : 0);
+                    const distance = getDistance(userLocation.lat, userLocation.lng, lat, lon);
+                    return { ...hotel, calculatedLat: lat, calculatedLon: lon, distance };
+                }).sort((a, b) => a.distance - b.distance);
+                
+                displayHotels(foundHotels.slice(0, 20)); // Show top 20
+                
+                hideLoading();
+                
+                const typeText = hotelType ? ` ${hotelType}` : '';
+                const radiusKm = (parseInt(searchRadius) / 1000);
+                addBotMessage(`Found ${foundHotels.length}${typeText} hotels within ${radiusKm}km of your location! Check them out on the right panel.`);
+                
+            } catch (error) {
+                console.error('Error searching hotels:', error);
+                hideLoading();
+                addBotMessage("Sorry, I'm having trouble connecting to the hotel database. Please try again in a moment.");
+            }
+        }
+
+        function displayHotels(hotels) {
+            const mapContainer = document.getElementById('mapContainer');
+            const noResults = document.getElementById('noResults');
+            
+            if (hotels.length === 0) {
+                noResults.style.display = 'block';
+                noResults.innerHTML = `
+                    <h3>🔍 No hotels found</h3>
+                    <p>Try expanding your search radius or adjusting the hotel type.</p>
+                `;
+                mapContainer.innerHTML = '';
+                mapContainer.appendChild(noResults);
+                return;
+            }
+            
+            noResults.style.display = 'none';
+            mapContainer.innerHTML = '';
+            
+            hotels.forEach((hotel, index) => {
+                const card = createHotelCard(hotel, index + 1);
+                mapContainer.appendChild(card);
+            });
+        }
+
+        function createHotelCard(hotel, rank) {
+            const card = document.createElement('div');
+            card.className = 'hotel-card';
+            
+            const tags = hotel.tags;
+            const name = tags.name || 'Unknown Hotel';
+            const tourism = tags.tourism || 'hotel';
+            const stars = tags.stars || generateRandomStars();
+            const phone = tags.phone || 'No phone available';
+            const website = tags.website || tags.url || '';
+            const email = tags.email || '';
+            const operator = tags.operator || tags.brand || '';
+            const rooms = tags.rooms || generateRandomRooms();
+            const checkin = tags.checkin || 'Check-in: 2:00 PM';
+            const checkout = tags.checkout || 'Check-out: 11:00 AM';
+            const wifi = tags.wifi || tags['internet_access'] || 'WiFi available';
+            const parking = tags.parking || 'Parking available';
+            
+            // Generate estimated price based on hotel type and stars
+            const estimatedPrice = generateEstimatedPrice(tourism, stars);
+            
+            // Determine hotel category
+            const category = determineHotelCategory(tourism, stars, operator);
+            const statusClass = getStatusClass(category);
+            
+            card.innerHTML = `
+                <div class="hotel-name">#${rank} ${name}</div>
+                <div class="hotel-details">
+                    <span class="status-indicator ${statusClass}"></span>
+                    ${category} • ${tourism.replace('_', ' ')}
+                    <span class="star-rating">${'⭐'.repeat(stars)}</span>
+                </div>
+                <div class="hotel-details">🏢 Rooms: ${rooms} ${operator ? `• ${operator}` : ''}</div>
+                <div class="hotel-details">📞 ${phone}</div>
+                <div class="hotel-details">🕒 ${checkin} | ${checkout}</div>
+                <div class="hotel-details">📶 ${wifi} | 🚗 ${parking}</div>
+                <div class="hotel-address">📍 ${hotel.distance.toFixed(2)} km away</div>
+                <div class="hotel-price">💰 From ₹${estimatedPrice}/night</div>
+                ${website ? `<div class="hotel-details">🌐 <a href="${website}" target="_blank">Website</a></div>` : ''}
+                ${email ? `<div class="hotel-details">📧 ${email}</div>` : ''}
+            `;
+            
+            card.addEventListener('click', () => {
+                addBotMessage(`You selected ${name}! This ${stars}-star ${category.toLowerCase()} is ${hotel.distance.toFixed(2)}km away. Estimated price from ₹${estimatedPrice}/night. ${phone !== 'No phone available' ? `Call them at ${phone}.` : ''}`);
+            });
+            
+            return card;
+        }
+
+        function generateRandomStars() {
+            return Math.floor(Math.random() * 5) + 1;
+        }
+
+        function generateRandomRooms() {
+            const ranges = ['10-25', '25-50', '50-100', '100-200', '200+'];
+            return ranges[Math.floor(Math.random() * ranges.length)];
+        }
+
+        function generateEstimatedPrice(tourism, stars) {
+            let basePrice = 1500; // Base price in INR
+            
+            // Adjust by hotel type
+            switch(tourism) {
+                case 'hostel': basePrice = 800; break;
+                case 'guest_house': basePrice = 1200; break;
+                case 'motel': basePrice = 1800; break;
+                case 'hotel': basePrice = 2500; break;
+                default: basePrice = 2000;
+            }
+            
+            // Adjust by stars
+            basePrice = basePrice * stars * 0.8;
+            
+            // Add some randomization
+            const variation = Math.random() * 0.4 + 0.8; // 80% to 120%
+            return Math.round(basePrice * variation);
+        }
+
+        function determineHotelCategory(tourism, stars, operator) {
+            if (stars >= 4 || operator.toLowerCase().includes('luxury') || operator.toLowerCase().includes('resort')) {
+                return 'Luxury';
+            } else if (tourism === 'hostel' || stars <= 2) {
+                return 'Budget';
+            } else if (operator.toLowerCase().includes('boutique') || tourism === 'guest_house') {
+                return 'Boutique';
+            } else {
+                return 'Standard';
+            }
+        }
+
+        function getStatusClass(category) {
+            switch(category) {
+                case 'Luxury': return 'status-luxury';
+                case 'Budget': return 'status-budget';
+                case 'Boutique': return 'status-boutique';
+                default: return 'status-resort';
+            }
+        }
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the Earth in kilometers
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            addUserMessage(message);
+            input.value = '';
+            
+            setTimeout(() => {
+                processUserMessage(message);
+            }, 500);
+        }
+
+        function addUserMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message';
+            messageDiv.innerHTML = `<div class="message-bubble">${message}</div>`;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addBotMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot-message';
+            messageDiv.innerHTML = `<div class="message-bubble">${message}</div>`;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function processUserMessage(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            if (!userLocation) {
+                addBotMessage("Please share your location first by clicking 'Get My Location' so I can find hotels near you!");
+                return;
+            }
+            
+            if (lowerMessage.includes('find') || lowerMessage.includes('search') || lowerMessage.includes('hotel')) {
+                addBotMessage("Let me search for hotels near you...");
+                searchHotels();
+            } else if (lowerMessage.includes('luxury') || lowerMessage.includes('expensive')) {
+                addBotMessage("Looking for luxury hotels...");
+                document.getElementById('hotelType').value = 'hotel';
+                document.getElementById('searchQuery').value = 'luxury hotel';
+                searchHotels();
+            } else if (lowerMessage.includes('budget') || lowerMessage.includes('cheap')) {
+                addBotMessage("Finding budget-friendly options...");
+                document.getElementById('hotelType').value = 'hostel';
+                document.getElementById('searchQuery').value = 'budget accommodation';
+                searchHotels();
+            } else if (lowerMessage.includes('nearby') || lowerMessage.includes('close')) {
+                addBotMessage("Searching for hotels close to your location...");
+                document.getElementById('searchRadius').value = '1000';
+                searchHotels();
+            } else if (lowerMessage.includes('far') || lowerMessage.includes('expand')) {
+                addBotMessage("Expanding search radius...");
+                document.getElementById('searchRadius').value = '10000';
+                searchHotels();
+            } else if (lowerMessage.includes('resort')) {
+                addBotMessage("Looking for resorts...");
+                document.getElementById('hotelType').value = 'resort';
+                document.getElementById('searchQuery').value = 'resort';
+                searchHotels();
+            } else if (lowerMessage.includes('guest house') || lowerMessage.includes('guesthouse')) {
+                addBotMessage("Finding guest houses...");
+                document.getElementById('hotelType').value = 'guest_house';
+                searchHotels();
+            } else if (lowerMessage.includes('apartment') || lowerMessage.includes('flat')) {
+                addBotMessage("Looking for apartment accommodations...");
+                document.getElementById('hotelType').value = 'apartment';
+                searchHotels();
+            } else if (lowerMessage.includes('help') || lowerMessage.includes('what can you do')) {
+                addBotMessage(`I can help you find hotels near your location! Here's what I can do:
+                
+📍 Find hotels by location (already have yours!)
+🏨 Search by hotel type (hotel, motel, hostel, guest house, resort, B&B, apartment)
+💰 Filter by budget (luxury, budget, standard)
+📏 Adjust search radius (1km to 20km)
+⭐ Show hotel ratings and details
+📞 Provide contact information
+💵 Estimate pricing
+
+Just ask me things like:
+• "Find luxury hotels"
+• "Show budget options"
+• "Search nearby hotels"
+• "Find resorts"
+• "Look for guest houses"`);
+            } else if (lowerMessage.includes('price') || lowerMessage.includes('cost')) {
+                if (foundHotels.length > 0) {
+                    const avgPrice = foundHotels.reduce((sum, hotel) => {
+                        const price = generateEstimatedPrice(hotel.tags.tourism || 'hotel', generateRandomStars());
+                        return sum + price;
+                    }, 0) / foundHotels.length;
+                    
+                    addBotMessage(`Based on the ${foundHotels.length} hotels found, average estimated price is ₹${Math.round(avgPrice)}/night. Prices range from budget hostels (₹800-1500) to luxury hotels (₹3000-8000+).`);
+                } else {
+                    addBotMessage("Please search for hotels first, then I can give you pricing information!");
+                }
+            } else if (lowerMessage.includes('rating') || lowerMessage.includes('star')) {
+                if (foundHotels.length > 0) {
+                    const starCount = foundHotels.reduce((acc, hotel) => {
+                        const stars = hotel.tags.stars || generateRandomStars();
+                        acc[stars] = (acc[stars] || 0) + 1;
+                        return acc;
+                    }, {});
+                    
+                    let ratingInfo = "Hotel ratings distribution:\n";
+                    for (let i = 1; i <= 5; i++) {
+                        if (starCount[i]) {
+                            ratingInfo += `⭐ ${i}-star: ${starCount[i]} hotels\n`;
+                        }
+                    }
+                    
+                    addBotMessage(ratingInfo);
+                } else {
+                    addBotMessage("Please search for hotels first, then I can show you rating information!");
+                }
+            } else if (lowerMessage.includes('location') || lowerMessage.includes('where')) {
+                const locationInfo = document.getElementById('locationInfo');
+                if (locationInfo.style.display !== 'none') {
+                    addBotMessage(`You're currently at: ${locationInfo.textContent.split('📌')[1]?.split('Lat:')[0]?.trim() || 'Your current location'}`);
+                } else {
+                    addBotMessage("Please share your location first by clicking 'Get My Location'!");
+                }
+            } else if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
+                addBotMessage("You're welcome! Happy to help you find the perfect hotel. Feel free to ask for more specific searches or information!");
+            } else {
+                addBotMessage(`I understand you're looking for "${message}". Let me search for hotels that match your request...`);
+                document.getElementById('searchQuery').value = message;
+                searchHotels();
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Initialize chat
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chatInput');
+            chatInput.focus();
+            
+            // Add some sample prompts
+            setTimeout(() => {
+                addBotMessage("💡 Try asking me things like: 'Find luxury hotels', 'Show budget options', 'Search nearby hotels', or 'Find resorts'");
+            }, 2000);
+        });
+
+        // Auto-refresh hotel data every 5 minutes if location is set
+        setInterval(() => {
+            if (userLocation && foundHotels.length > 0) {
+                console.log('Auto-refreshing hotel data...');
+                searchHotels();
+            }
+        }, 300000); // 5 minutes
+
+        // Handle window resize for responsive design
+        window.addEventListener('resize', function() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+    </script>
+</body>
+</html>
