@@ -1,75 +1,60 @@
-# VR Restaurant App
+# VR Restaurant
 
-A virtual reality-themed restaurant web application powered by **Flask**, **Socket.IO**, and **SQLite**, allowing users to:
-
-- Join VR dining rooms
-- Place interactive food orders
-- Customize dining environments
-- Play mini-games while waiting
-- View and manage kitchen orders
-- Get real-time AI-powered food recommendations (via location)
-
-##  Features
-
--  **Food Menu**: Order from appetizers, main courses, desserts, and drinks.
--  **Join Friends**: Enter a 6-digit room code to dine together.
--  **Environments**: Choose from 5 immersive VR themes.
--  **Mini-Games**: Includes memory, puzzle, trivia, and sushi slicing games.
--  **Kitchen Dashboard**: Monitor and complete pending orders.
--  **Live Recommendations**: AI chatbot uses Google Maps + OpenAI to suggest food nearby.
-
-##  Tech Stack
-
-- **Backend**: Flask, Flask-SocketIO
-- **Frontend**: HTML, CSS, Vanilla JS
-- **Database**: SQLite
-- **APIs**: OpenAI, Google Maps
-- **Others**: Jinja2, Python Dotenv
-
-##  Project Structure
-
-```plaintext
-.
-├── app.py                # Flask backend entry point
-├── requirements.txt      # Python dependencies
-├── static/               # Static assets (CSS, JS, images)
-│   ├── css/
-│   ├── js/
-│   └── images/
-├── templates/            # Jinja2 HTML templates
-│   ├── index.html
-│   ├── menu.html
-│   ├── kitchen.html
-│   └── ...
-├── instance/             # SQLite database (e.g., app.db)
-├── .env                  # API keys and environment variables
-└── README.md             # Project documentation
-```
-
-##  Getting Started
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Pragna-Sresta-5/VR-Mangement-System.git
-   cd VR-Mangement-System
-   ```
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Set up your `.env` file with your OpenAI and Google Maps API keys.
-4. Run the application:
-   ```bash
-   python app.py
-   ```
-5. Open your browser and go to `http://localhost:5000`.
-
-##  Contributing
-
-Contributions are welcome! Fork the repo and submit a pull request.
-
-## 📄 License
-
-This project is licensed under the repository's license.
+**VR Restaurant** is a virtual dining simulation web application. It allows users to place food orders, play mini-games, invite friends using room codes, and simulate a restaurant experience with dynamic environments. The application is entirely frontend-based and developed using HTML, CSS, and JavaScript.
 
 ---
+
+## Features
+
+- **Interactive Menu System**: Browse and order from a variety of food items.
+- **Room Code Support**: Share or join rooms using unique room codes.
+- **Environment Customization**: Choose from multiple virtual dining environments.
+- **Mini-Games**: Play games while waiting and earn discounts based on your score.
+- **Billing System**: View a detailed bill with automatic discount calculations.
+- **Kitchen Dashboard**: Manage and track order statuses as a staff member.
+- **Friend Collaboration**: Invite friends to join your virtual room and dine together.
+
+---
+
+## Technologies Used
+
+- HTML5
+- CSS3 (with responsive grid and hover effects)
+- Vanilla JavaScript (no frameworks)
+
+---
+
+## How to Run
+
+1. **Clone this repository:**
+   ```bash
+   git clone https://github.com/your-username/vr-restaurant.git
+   cd vr-restaurant
+   ```
+
+2. **Open the application:**
+
+   **Option 1:** Open `index.html` directly in any modern web browser.
+
+   **Option 2 (recommended for local hosting):**
+   ```bash
+   python -m http.server
+   ```
+   Then navigate to [http://localhost:8000](http://localhost:8000) in your browser.
+
+---
+
+## File Structure
+
+- `index.html` - Main application file containing the structure, styles, and script.
+- `README.md` - Project documentation.
+
+---
+
+## License
+
+This project is open-source and available under the MIT License.
+
+---
+
+*Let me know if you want me to customize this further for a hosted deployment (like GitHub Pages or Render).*
