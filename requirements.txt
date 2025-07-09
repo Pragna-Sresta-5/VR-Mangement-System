@@ -1,6 +1,0 @@
-fastapi
-uvicorn
-openai
-googlemaps
-jinja2
-python-dotenv
