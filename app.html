@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VR Restaurant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #ffffff;
+            min-height: 100vh;
+            color: #333;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px;
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 40px;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        .room-code { 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin: 15px 0;
+            background: #e9ecef;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .menu-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .menu-card { 
+            background: #f8f9fa;
+            padding: 30px; 
+            text-align: center; 
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+        .menu-card:hover { 
+            transform: translateY(-5px);
+            background: #e9ecef;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .panel { 
+            display: none; 
+            background: #f8f9fa;
+            padding: 30px; 
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        .panel.active { display: block; }
+        .food-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px; 
+            margin: 20px 0;
+        }
+        .food-item { 
+            background: #ffffff;
+            padding: 20px; 
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        .price { 
+            font-weight: bold; 
+            color: #007bff;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        button { 
+            padding: 12px 24px; 
+            border: 1px solid #007bff;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        button:hover { 
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+        .back-btn { 
+            background: #6c757d;
+            border-color: #6c757d;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background: #545b62;
+        }
+        .order-summary { 
+            background: #e9ecef;
+            padding: 20px; 
+            margin-top: 20px;
+            border-radius: 8px;
+            border: 1px solid #d0d0d0;
+        }
+        .notification { 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 30px; 
+            text-align: center; 
+            display: none;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+        input { 
+            padding: 12px; 
+            margin: 10px; 
+            border: 1px solid #d0d0d0;
+            border-radius: 5px;
+            background: white;
+            color: #333;
+        }
+        input::placeholder { color: #999; }
+        .game-area {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        .env-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .order-card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            margin-bottom: 15px;
+            border: 1px solid #e0e0e0;
+        }
+        .order-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .status-preparing {
+            background: #ff9800;
+            color: white;
+        }
+        .status-ready {
+            background: #4caf50;
+            color: white;
+        }
+        .status-completed {
+            background: #9e9e9e;
+            color: white;
+        }
+        .order-items {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .bill-container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px solid #007bff;
+            margin-top: 20px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .bill-header {
+            text-align: center;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .bill-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .bill-total {
+            font-weight: bold;
+            font-size: 18px;
+            border-top: 2px solid #007bff;
+            padding-top: 10px;
+            margin-top: 15px;
+        }
+        .discount-info {
+            color: #28a745;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .score-display {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .savings-highlight {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            color: #155724;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>VR Restaurant</h1>
+            <div class="room-code">Room: <span id="roomCode">VR2024</span></div>
+            <p>Welcome to your virtual dining experience</p>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="mainMenu" class="menu-grid">
+            <div class="menu-card" onclick="showPanel('menuPanel')">
+                <h3>Order Food</h3>
+                <p>Browse our delicious menu</p>
+            </div>
+            <div class="menu-card" onclick="showPanel('environmentPanel')">
+                <h3>Environment</h3>
+                <p>Change your dining scene</p>
+            </div>
+            <div class="menu-card" onclick="showPanel('gamesPanel')">
+                <h3>Games</h3>
+                <p>Play while you wait</p>
+            </div>
+            <div class="menu-card" onclick="showPanel('friendsPanel')">
+                <h3>Friends</h3>
+                <p>Invite friends to dine</p>
+            </div>
+            <div class="menu-card" onclick="showKitchen()">
+                <h3>Kitchen</h3>
+                <p>Manage orders (Staff)</p>
+            </div>
+        </div>
+
+        <!-- Food Menu Panel -->
+        <div id="menuPanel" class="panel">
+            <button class="back-btn" onclick="showMainMenu()">← Back to Main Menu</button>
+            <h2>Restaurant Menu</h2>
+            
+            <div class="food-grid" id="foodGrid">
+                <div class="food-item">
+                    <h4>Caesar Salad</h4>
+                    <p>Fresh romaine with parmesan</p>
+                    <div class="price">$12.99</div>
+                    <button onclick="addToOrder('Caesar Salad', 12.99)">Add to Order</button>
+                </div>
+                <div class="food-item">
+                    <h4>Chicken Wings</h4>
+                    <p>Spicy buffalo wings</p>
+                    <div class="price">$14.99</div>
+                    <button onclick="addToOrder('Chicken Wings', 14.99)">Add to Order</button>
+                </div>
+                <div class="food-item">
+                    <h4>Grilled Salmon</h4>
+                    <p>Atlantic salmon with herbs</p>
+                    <div class="price">$28.99</div>
+                    <button onclick="addToOrder('Grilled Salmon', 28.99)">Add to Order</button>
+                </div>
+                <div class="food-item">
+                    <h4>Chicken Pasta</h4>
+                    <p>Creamy alfredo with chicken</p>
+                    <div class="price">$18.99</div>
+                    <button onclick="addToOrder('Chicken Pasta', 18.99)">Add to Order</button>
+                </div>
+                <div class="food-item">
+                    <h4>Chocolate Cake</h4>
+                    <p>Rich chocolate layer cake</p>
+                    <div class="price">$8.99</div>
+                    <button onclick="addToOrder('Chocolate Cake', 8.99)">Add to Order</button>
+                </div>
+                <div class="food-item">
+                    <h4>Craft Beer</h4>
+                    <p>Local brewery selection</p>
+                    <div class="price">$6.99</div>
+                    <button onclick="addToOrder('Craft Beer', 6.99)">Add to Order</button>
+                </div>
+            </div>
+            
+            <div class="order-summary">
+                <h3>Your Order</h3>
+                <div id="orderItems">No items selected</div>
+                <div id="orderTotal">Total: $0.00</div>
+                <button onclick="placeOrder()" style="background: #28a745; border-color: #28a745; margin-top: 15px;">Place Order</button>
+            </div>
+        </div>
+
+        <!-- Environment Panel -->
+        <div id="environmentPanel" class="panel">
+            <button class="back-btn" onclick="showMainMenu()">← Back to Main Menu</button>
+            <h2>Choose Your Environment</h2>
+            <div class="env-grid">
+                <button onclick="changeEnvironment('Beach Sunset')">Beach</button>
+                <button onclick="changeEnvironment('Rooftop Sky')">Rooftop</button>
+                <button onclick="changeEnvironment('Zen Garden')">Zen Garden</button>
+                <button onclick="changeEnvironment('Space Station')">Space</button>
+                <button onclick="changeEnvironment('Jungle Cafe')">Jungle</button>
+            </div>
+        </div>
+
+        <!-- Games Panel -->
+        <div id="gamesPanel" class="panel">
+            <button class="back-btn" onclick="showMainMenu()">← Back to Main Menu</button>
+            <h2>Mini Games</h2>
+            <div class="score-display">
+                <h3>Current Game Score: <span id="currentScore">0</span></h3>
+                <p>Score 500+ points to unlock discounts!</p>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="startGame('Memory Game')">
+                    <h3>Memory</h3>
+                    <p>Test your memory skills</p>
+                </div>
+                <div class="menu-card" onclick="startGame('Puzzle')">
+                    <h3>Puzzle</h3>
+                    <p>Solve the puzzle</p>
+                </div>
+                <div class="menu-card" onclick="startGame('Sushi Slice')">
+                    <h3>Sushi Slice</h3>
+                    <p>Slice the sushi perfectly</p>
+                </div>
+                <div class="menu-card" onclick="startGame('Food Trivia')">
+                    <h3>Trivia</h3>
+                    <p>Test your food knowledge</p>
+                </div>
+            </div>
+            <div id="gameArea"></div>
+        </div>
+
+        <!-- Kitchen Panel -->
+        <div id="kitchenPanel" class="panel">
+            <button class="back-btn" onclick="showMainMenu()">← Back to Main Menu</button>
+            <h2>Kitchen Dashboard</h2>
+            <div style="text-align: center; margin: 20px 0;">
+                <button onclick="refreshOrders()">Refresh Orders</button>
+                <span style="margin: 0 20px;">Active Orders: <span id="activeOrderCount">0</span></span>
+            </div>
+            
+            <div id="ordersGrid" class="food-grid">
+                <div style="text-align: center; color: #666; grid-column: 1 / -1;">
+                    <p>No orders yet</p>
+                    <p>Orders will appear here when customers place them</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Friends Panel -->
+        <div id="friendsPanel" class="panel">
+            <button class="back-btn" onclick="showMainMenu()">← Back to Main Menu</button>
+            <h2>Friends & Room</h2>
+            <div style="text-align: center; margin: 30px 0;">
+                <p>Share your room code with friends:</p>
+                <div class="room-code" onclick="copyRoomCode()" style="cursor: pointer;">VR2024</div>
+                <button onclick="copyRoomCode()">Copy Code</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 40px;">
+                <h3>Join Another Room</h3>
+                <input type="text" id="joinCodeInput" placeholder="Enter room code" maxlength="6">
+                <button onclick="joinRoom()">Join Room</button>
+            </div>
+        </div>
+
+        <!-- Bill Panel -->
+        <div id="billPanel" class="panel">
+            <button class="back-btn" onclick="showMainMenu()">← Back to Main Menu</button>
+            <h2>Final Bill</h2>
+            <div id="billContent"></div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <h3 id="notificationTitle">Order Ready!</h3>
+        <p id="notificationText">Your delicious food is ready to serve!</p>
+        <button onclick="hideNotification()">Awesome!</button>
+    </div>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+        font-family: Arial, sans-serif; 
+        background: linear-gradient(135deg, #e953da 0%, pink 100%);
+        min-height: 100vh;
+        color: #333;
+        background-attachment: fixed;
+        background-size: cover;
+    }
+    /* ... rest of your existing CSS remains exactly the same ... */
+</style>
+    <script>
+        let currentOrder = [];
+        let orderTotal = 0;
+        let currentEnvironment = 'Beach Sunset';
+        let allOrders = [];
+        let orderIdCounter = 1;
+        let gameScore = 0;
+        let totalGameScore = 0;
+        let completedOrders = [];
+
+        // UI Functions
+        function showPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById(panelId).classList.add('active');
+        }
+
+        function showMainMenu() {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('mainMenu').style.display = 'grid';
+        }
+
+        // Menu Functions
+        function addToOrder(name, price) {
+            currentOrder.push({name, price});
+            orderTotal += price;
+            updateOrderDisplay();
+        }
+
+        function updateOrderDisplay() {
+            const itemsDiv = document.getElementById('orderItems');
+            const totalDiv = document.getElementById('orderTotal');
+            
+            if (currentOrder.length === 0) {
+                itemsDiv.innerHTML = 'No items selected';
+            } else {
+                itemsDiv.innerHTML = currentOrder.map(item => 
+                    `<div style="margin: 5px 0;">${item.name} - $${item.price.toFixed(2)}</div>`
+                ).join('');
+            }
+            
+            totalDiv.innerHTML = `Total: $${orderTotal.toFixed(2)}`;
+        }
+
+        function placeOrder() {
+            if (currentOrder.length === 0) {
+                alert('Please add items to your order first!');
+                return;
+            }
+
+            const cookingTime = Math.floor(Math.random() * 60) + 30;
+            const orderId = orderIdCounter++;
+            const roomCode = document.getElementById('roomCode').textContent;
+            
+            const order = {
+                id: orderId,
+                roomCode: roomCode,
+                items: [...currentOrder],
+                total: orderTotal,
+                status: 'preparing',
+                orderTime: new Date().toLocaleTimeString(),
+                cookingTime: cookingTime
+            };
+            
+            allOrders.push(order);
+            
+            showNotification('Order Placed!', `Your order #${orderId} is being prepared. Estimated time: ${cookingTime} seconds`);
+            
+            setTimeout(() => {
+                updateOrderStatus(orderId, 'ready');
+                showNotification('Order Ready!', `Order #${orderId} is ready to serve!`);
+                
+                // Move to completed orders and show bill
+                setTimeout(() => {
+                    completeOrderAndShowBill(orderId);
+                }, 5000);
+            }, cookingTime * 1000);
+            
+            currentOrder = [];
+            orderTotal = 0;
+            updateOrderDisplay();
+            showMainMenu();
+        }
+
+        function completeOrderAndShowBill(orderId) {
+            const order = allOrders.find(o => o.id === orderId);
+            if (order) {
+                order.status = 'completed';
+                completedOrders.push(order);
+                generateBill(order);
+            }
+        }
+
+        function generateBill(order) {
+            const discount = calculateDiscount(totalGameScore);
+            const subtotal = order.total;
+            const discountAmount = subtotal * (discount / 100);
+            const finalTotal = subtotal - discountAmount;
+            
+            const billHTML = `
+                <div class="bill-container">
+                    <div class="bill-header">
+                        <h2>VR Restaurant</h2>
+                        <p>Order #${order.id}</p>
+                        <p>Room: ${order.roomCode}</p>
+                        <p>Time: ${order.orderTime}</p>
+                    </div>
+                    
+                    <div class="bill-items">
+                        ${order.items.map(item => `
+                            <div class="bill-item">
+                                <span>${item.name}</span>
+                                <span>${item.price.toFixed(2)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="bill-item">
+                        <span>Subtotal:</span>
+                        <span>${subtotal.toFixed(2)}</span>
+                    </div>
+                    
+                    ${discount > 0 ? `
+                        <div class="bill-item discount-info">
+                            <span>Game Score Discount (${discount}% - ${totalGameScore} points):</span>
+                            <span>-${discountAmount.toFixed(2)}</span>
+                        </div>
+                        <div class="discount-info" style="text-align: center; margin: 15px 0;">
+                            <p>Congratulations! Your game score of ${totalGameScore} points earned you a ${discount}% discount!</p>
+                            <p>You saved ${discountAmount.toFixed(2)} on this order!</p>
+                        </div>
+                    ` : `
+                        <div class="discount-info" style="text-align: center; margin: 15px 0;">
+                            <p>Play games to earn points and unlock discounts!</p>
+                            <p>500 points = 5% | 1000 points = 10% | 1500 points = 15% | 2000 points = 20%</p>
+                        </div>
+                    `}
+                    
+                    <div class="bill-item bill-total">
+                        <span>Final Total:</span>
+                        <span>${finalTotal.toFixed(2)}</span>
+                    </div>
+                    
+                    ${discount > 0 ? `
+                        <div style="text-align: center; margin: 15px 0; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;">
+                            <strong>You saved ${discountAmount.toFixed(2)} with your game score!</strong>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="showMainMenu()" style="background: #28a745; border-color: #28a745;">
+                            Continue Dining
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('billContent').innerHTML = billHTML;
+            showPanel('billPanel');
+        }
+
+        function calculateDiscount(score) {
+            if (score >= 2000) return 20;
+            if (score >= 1500) return 15;
+            if (score >= 1000) return 10;
+            if (score >= 500) return 5;
+            return 0;
+        }
+
+        // Environment Functions
+        function changeEnvironment(envName) {
+            currentEnvironment = envName;
+            showNotification('Environment Changed!', `Now dining in: ${envName}`);
+            showMainMenu();
+        }
+
+        // Game Functions
+        function startGame(gameType) {
+            gameScore = 0;
+            const gameArea = document.getElementById('gameArea');
+            
+            gameArea.innerHTML = `
+                <div class="game-area">
+                    <h3>${gameType} Started!</h3>
+                    <div style="font-size: 24px; margin: 20px;">Score: <span id="gameScore">0</span></div>
+                    <div style="margin: 20px;">
+                        <button onclick="playGame()">Play Game</button>
+                        <button onclick="endGame()">End Game</button>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <p>Keep playing to increase your score!</p>
+                        <p>Higher scores = Better discounts on your bill!</p>
+                    </div>
+                </div>
+            `;
+            
+            window.playGame = function() {
+                gameScore += Math.floor(Math.random() * 100) + 50;
+                document.getElementById('gameScore').textContent = gameScore;
+                
+                if (gameScore >= 500) {
+                    showNotification('Great Score!', `You've reached ${gameScore} points! This will give you a discount!`);
+                }
+            };
+            
+            window.endGame = function() {
+                totalGameScore += gameScore;
+                document.getElementById('currentScore').textContent = totalGameScore;
+                gameArea.innerHTML = `
+                    <div class="game-area">
+                        <h3>Game Complete!</h3>
+                        <p>This Game Score: ${gameScore}</p>
+                        <p>Total Score: ${totalGameScore}</p>
+                        <p>Discount Level: ${calculateDiscount(totalGameScore)}%</p>
+                        <button onclick="showMainMenu()">Back to Menu</button>
+                    </div>
+                `;
+                showNotification('Game Over!', `Final Score: ${gameScore}! Total Score: ${totalGameScore}`);
+            };
+        }
+
+        // Kitchen Functions
+        function showKitchen() {
+            showPanel('kitchenPanel');
+            refreshOrders();
+        }
+
+        function refreshOrders() {
+            const ordersGrid = document.getElementById('ordersGrid');
+            const activeOrders = allOrders.filter(order => order.status !== 'completed');
+            
+            document.getElementById('activeOrderCount').textContent = activeOrders.length;
+            
+            if (activeOrders.length === 0) {
+                ordersGrid.innerHTML = `
+                    <div style="text-align: center; color: #666; grid-column: 1 / -1;">
+                        <p>No active orders</p>
+                        <p>Orders will appear here when customers place them</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            ordersGrid.innerHTML = activeOrders.map(order => `
+                <div class="order-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Order #${order.id}</h3>
+                        <span class="order-status status-${order.status}">
+                            ${order.status.toUpperCase()}
+                        </span>
+                    </div>
+                    <p><strong>Room:</strong> ${order.roomCode}</p>
+                    <p><strong>Time:</strong> ${order.orderTime}</p>
+                    <p><strong>Total:</strong> $${order.total.toFixed(2)}</p>
+                    
+                    <div class="order-items">
+                        <strong>Items:</strong>
+                        ${order.items.map(item => `
+                            <div class="order-item">
+                                <span>${item.name}</span>
+                                <span>$${item.price.toFixed(2)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 15px;">
+                        ${order.status === 'preparing' ? `
+                            <button onclick="markOrderReady(${order.id})" style="background: #28a745; border-color: #28a745;">
+                                Mark Ready
+                            </button>
+                        ` : order.status === 'ready' ? `
+                            <button onclick="completeOrder(${order.id})" style="background: #007bff; border-color: #007bff;">
+                                Complete Order
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function markOrderReady(orderId) {
+            updateOrderStatus(orderId, 'ready');
+            showNotification('Order Ready!', `Order #${orderId} marked as ready for pickup`);
+            refreshOrders();
+        }
+
+        function completeOrder(orderId) {
+            completeOrderAndShowBill(orderId);
+            refreshOrders();
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            const order = allOrders.find(o => o.id === orderId);
+            if (order) {
+                order.status = newStatus;
+            }
+        }
+
+        // Friends Functions
+        function copyRoomCode() {
+            const code = 'VR2024';
+            navigator.clipboard.writeText(code).then(() => {
+                showNotification('Code Copied!', 'Room code copied to clipboard');
+            }).catch(() => {
+                showNotification('Code: VR2024', 'Share this code with friends');
+            });
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('joinCodeInput').value.trim();
+            if (code.length >= 4) {
+                showNotification('Joining Room...', `Connecting to room: ${code}`);
+                document.getElementById('roomCode').textContent = code;
+                showMainMenu();
+            } else {
+                alert('Please enter a valid room code');
+            }
+        }
+
+        // Notification Functions
+        function showNotification(title, text) {
+            document.getElementById('notificationTitle').textContent = title;
+            document.getElementById('notificationText').textContent = text;
+            document.getElementById('notification').style.display = 'block';
+            
+            setTimeout(() => {
+                hideNotification();
+            }, 3000);
+        }
+
+        function hideNotification() {
+            document.getElementById('notification').style.display = 'none';
+        }
+
+        // Initialize
+        updateOrderDisplay();
+        document.getElementById('currentScore').textContent = totalGameScore;
+        
+        // Auto-refresh kitchen orders every 10 seconds
+        setInterval(() => {
+            if (document.getElementById('kitchenPanel').classList.contains('active')) {
+                refreshOrders();
+            }
+        }, 10000);
+        
+        // Welcome message
+        setTimeout(() => {
+            showNotification('Welcome to VR Restaurant!', 'Enjoy your virtual dining experience');
+        }, 1000);
+    </script>
+</body>
+</html>
